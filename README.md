@@ -1,6 +1,6 @@
-# Git ChatGPT Hook
+# Chatbot Commit
 
-Git ChatGPT Hook是一个Git钩子，它使用ChatGPT根据提交中的更改生成提交消息。
+Chatbot Commit是一个Git钩子，它使用ChatGPT根据提交中的更改生成提交消息。
 
 ## 使用方法
 
