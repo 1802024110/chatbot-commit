@@ -26,7 +26,7 @@ git config --global core.hooksPath ""
 
 ## API
 
-该项使用的是免费API，个人使用不会有问题。如果需要大量使用，请自行搭建云函数，并将`fvusmj86xf.hk.aircode.run`修改为自己的云函数地址。
+请自行搭建云函数，并将`<这里替换为自己的云函数>`修改为自己的云函数地址。
 
 ### 云函数
 项目中使用的云函数是基于[aircode](https://aircode.cool),点击[这里](https://aircode.cool/ut7f58ea34)搭建,请修改`Environments->OPENAI_KEY`.![git仓库chatcommit云函数key](https://jsdelivr.nodream.cf/gh/1802024110/GitHub_Oss@main/img/git仓库chatcommit云函数key.png)

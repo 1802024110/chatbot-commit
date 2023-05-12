@@ -67,7 +67,7 @@ else
   git_diff_output_encoded=$(urlencode "$git_diff_output")
 
   # 调用API连接代理传递git diff输出内容，并获取ChatGPT返回的提交内容
-  api_url="https://fvusmj86xf.hk.aircode.run/chat?question=$git_diff_output_encoded"
+  api_url="https://<这里替换为自己的云函数>/chat?question=$git_diff_output_encoded"
   api_response=$(curl -s "$api_url")
   commit_msg=$(echo "$api_response" | sed -n 's/.*"reply":"\([^"]*\).*/\1/p')
 fi
