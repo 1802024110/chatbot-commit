@@ -1,15 +1,12 @@
 #!/bin/bash
 
-# 错误处理机制
-set -e
-
 # 日志记录函数
 log() {
-  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1"
+  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" >&2
 }
 
 # 参数处理
-commit_msg=""
+commit_msg="提交消息是: "
 while getopts ":m:" opt; do
   case ${opt} in
     m )
@@ -40,36 +37,51 @@ export GIT_COMMIT_FROM_HOOK=1
 git add .
 
 # 获取git diff输出内容
-git_diff_output=$(git diff --cached)
+git_diff_output=$(git diff --cached --unified=0)
 
 # 如果git diff为空，设置一个默认的提交信息
 if [ -z "$git_diff_output" ]; then
   default_commit_msg="No changes made"
   log "Git diff is empty, using default commit message: $default_commit_msg"
   commit_msg="$default_commit_msg"
+else
+  # 将git diff输出内容分页
+  page_size=1000 # 每页的字符数
+  pages=$(((${#git_diff_output} + $page_size - 1) / $page_size)) # 总页数
+  for (( page = 1; page <= $pages; page++ )); do
+    start=$((($page - 1) * $page_size))
+    end=$(($start + $page_size))
+    page_output="${git_diff_output:$start:$end}"
+    urlencode() {
+      local LC_ALL=C
+      for (( i = 0; i < ${#1}; i++ )); do
+        local c="${1:i:1}"
+        case $c in
+          [a-zA-Z0-9.~_-]) printf '%s' "$c" ;;
+          *) printf '%%%02X' "'$c" ;;
+        esac
+      done
+    }
+    page_output_encoded=$(urlencode "$page_output")
+
+    # 调用API连接代理传递git diff输出内容，并获取ChatGPT返回的提交内容
+    api_url="https://fvusmj86xf.hk.aircode.run/chat?question=$page_output_encoded"
+    api_response=$(curl -s "$api_url")
+    page_commit_msg=$(echo "$api_response" | sed -n 's/.*"reply":"\([^"]*\).*/\1/p')
+    commit_msg="$commit_msg$page_commit_msg"
+  done
 fi
 
 # 如果提供了-m选项，则使用该选项的参数作为提交信息
 if [ -n "$commit_msg" ]; then
   log "Using provided commit message: $commit_msg"
 else
-  # 将git diff输出内容urlencode，以便传递给API
-  urlencode() {
-    local LC_ALL=C
-    for (( i = 0; i < ${#1}; i++ )); do
-      local c="${1:i:1}"
-      case $c in
-        [a-zA-Z0-9.~_-]) printf '%s' "$c" ;;
-        *) printf '%%%02X' "'$c" ;;
-      esac
-    done
-  }
-  git_diff_output_encoded=$(urlencode "$git_diff_output")
-
-  # 调用API连接代理传递git diff输出内容，并获取ChatGPT返回的提交内容
-  api_url="https://<这里替换为自己的云函数>/chat?question=$git_diff_output_encoded"
-  api_response=$(curl -s "$api_url")
-  commit_msg=$(echo "$api_response" | sed -n 's/.*"reply":"\([^"]*\).*/\1/p')
+  # 如果ChatGPT没有返回任何内容，则使用一个默认的提交信息
+  if [ -z "$commit_msg" ]; then
+    default_commit_msg="No changes made"
+    log "ChatGPT did not return any message, using default commit message: $default_commit_msg"
+    commit_msg="$default_commit_msg"
+  fi
 fi
 
 # 创建新的提交并设置提交信息为ChatGPT返回的提交内容
@@ -82,5 +94,3 @@ else
 No changes made
 EOF
 fi
-
-log "Commit successful"
