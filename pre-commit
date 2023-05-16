@@ -6,7 +6,7 @@ log() {
 }
 
 # 参数处理
-commit_msg="提交消息是: "
+commit_msg=""
 while getopts ":m:" opt; do
   case ${opt} in
     m )
@@ -65,7 +65,7 @@ else
     page_output_encoded=$(urlencode "$page_output")
 
     # 调用API连接代理传递git diff输出内容，并获取ChatGPT返回的提交内容
-    api_url="https://fvusmj86xf.hk.aircode.run/chat?question=$page_output_encoded"
+    api_url="https://<这里替换为自己的云函数>/chat?question=$page_output_encoded"
     api_response=$(curl -s "$api_url")
     page_commit_msg=$(echo "$api_response" | sed -n 's/.*"reply":"\([^"]*\).*/\1/p')
     commit_msg="$commit_msg$page_commit_msg"
